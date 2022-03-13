@@ -1,0 +1,121 @@
+---
+title: "Data manipulation test for language and data analysis"
+output: html_notebook
+---
+
+##Problem 1--------------------------------------------------------------
+
+```{r}
+if (!require("tidyr")) {
+install.packages("tidyr")
+ library(tidyr)
+}
+```
+```{r}
+if (!require("dplyr")) {
+  install.packages("dplyr")
+  library(dplyr)
+}
+```
+```{r}
+if (!require("reshape2")) {
+  install.packages("reshape2")
+  library(reshape2)
+}
+```
+```{r}
+id<-c(1,1,2,2)
+time<-c(1,2,1,2)
+x1<-c(5,3,6,2)
+x2<-c(6,5,1,4)
+mydata<-matrix(c(id,time,x1,x2),ncol=4,byrow=FALSE)
+colnames(mydata)<-c("id","time","x1","x2")
+mydata<-data.frame(mydata)
+```
+```{r}
+md<-melt(mydata, c("id","time"))
+```
+```{r}
+a<-dcast(md, id~variable, mean)
+b<-dcast(md, time~variable, mean)
+c<-dcast(md, id~time, mean)
+d<-dcast(md, id+time~variable)
+e<-dcast(md, id+variable~time)
+f<-dcast(md, id~variable+time)
+```
+
+##Problem 2--------------------------------------------------------------
+```{r}
+if (!require("dplyr")) {
+  install.packages("dplyr")
+  library(dplyr)
+}
+```
+```{r}
+if (!require("plyr")) {
+  install.packages("plyr")
+  library(plyr)
+}
+```
+```{r}
+if (!require("ggplot2")) {
+  install.packages("ggplot2")
+  library(ggplot2)
+}
+```
+```{r}
+
+df <- data.frame(read.csv("file:///C:/Users/sitti khadijah/Documents/homework 4/companies.csv",header = TRUE))
+```
+```{r}
+# Solve 2
+by(df,df$company,summary)
+```
+```{r}
+# Solve 2.1
+str(df)
+df$fy <- factor(df$fy, ordered = TRUE)
+# Choose one below
+df$profit_margin <- round((df$profit / df$revenue), 2)
+# df$profit_margin <- format((df$profit / df$revenue),digits =  2)
+# df <- mutate(df, profit_margin = round((profit/revenue), 2))
+# df$profit_margin <- mapply(function(x, y) round((x/y), 2), df$profit, df$revenue)
+
+# df$sums <- apply(df[,c('revenue', 'profit')], 1, function(x) sum(x))
+# df$profit_margin <- apply(df[,c('revenue', 'profit')], 1, function(x) { (x[2]/x[1]) } )
+# by group
+# dfsums <- ddply(df, 'company', summarize, sumMargin = sum(revenue))
+```
+```{r}
+# Solve 2.2 and 2.3
+df<-ddply(df, 'company', transform, propRevenue = revenue/sum(revenue), propProfit = profit/sum(profit))
+# df$sumProfit<-ddply(df, 'company', transform, sumProfit = sum(profit))
+# myResults <- ddply(companiesData, 'company', transform, highestMargin = max(margin), lowestMargin = min(margin))
+# The %>% is a "chaining"
+# highestProfitMargins <- df %>%
+#   group_by(company) %>%
+#   summarise(sumMargin = sum(revenue)) %>%
+#   summarise(bestMargin = revenue/sum(revenue))
+```
+```{r}
+# Solve 2.4
+```
+```{r}
+# Solve 2.5
+df2 <- ddply(df, 'company', summarize, meanRevenue = mean(revenue), stdRevenue = sd(revenue),
+             meanProfit = mean(profit), stdProfit = sd(profit),
+             meanProfit_margin = mean(profit_margin), stdProfit_margin = sd(profit_margin))
+df<-merge(df, df2) 
+remove(df2)
+```
+```{r}
+# Solve 2.6
+ggplot(data=df, aes(x=fy, y=profit_margin, group=company, linetype=company, shape=company ))+
+  labs(title="Profit margin trend",x="year", y = "profit_margin")+
+  scale_linetype_manual(values=c("twodash", "dashed", "solid"))+
+  geom_line(aes(color=company))+
+  scale_shape_manual(values=c("square", "circle", "triangle"))+
+  geom_point(aes(color=company))+
+  theme_classic()+
+  theme(legend.position="top")
+```
